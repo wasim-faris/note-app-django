@@ -27,6 +27,10 @@ SECRET_KEY = "django-insecure-hz#@=y@6(0$c7z)12%ll*an@53jecr7!maibdy-(y*urp)!_d=
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    "https://note-app-django-production.up.railway.app"
+]
+
 
 
 # Application definition
