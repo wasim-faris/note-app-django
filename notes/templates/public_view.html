@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenNotes | Future of Writing</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050505;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #8b5cf6;
+            --accent-light: #c084fc;
+        }
+
+        /* Fix modal shaking and horizontal overflow */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: #ffffff;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Prevent body shift when modal opens */
+            position: relative;
+        }
+
+        /* Prevent background shift when modal opens */
+        body.modal-open {
+            overflow: hidden;
+            padding-right: 0 !important;
+        }
+
+        .modal-backdrop {
+            position: fixed !important;
+        }
+
+        .modal {
+            padding-right: 0 !important;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .glass-nav {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* Mobile-responsive navbar container */
+        .glass-nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+            /* Add relative positioning for absolute centering of privacy selector on mobile */
+            position: relative;
+        }
+
+        .brand-logo {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            flex-shrink: 0;
+        }
+
+        /* Responsive brand logo */
+        @media (max-width: 576px) {
+            .brand-logo {
+                font-size: 18px;
+                letter-spacing: -0.5px;
+            }
+        }
+
+        .main-content {
+            flex: 1 0 auto;
+        }
+
+        /* Responsive nav controls wrapper */
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 576px) {
+            .nav-controls {
+                gap: 6px;
+            }
+        }
+
+        .privacy-selector {
+            position: relative;
+            display: flex;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px;
+            border-radius: 14px;
+            height: 44px;
+            width: 180px;
+            flex-shrink: 0;
+        }
+
+        /* Center privacy selector perfectly on mobile using absolute positioning */
+        @media (max-width: 576px) {
+            .privacy-selector {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                height: 38px;
+                width: 140px;
+                border-radius: 10px;
+                padding: 3px;
+                z-index: 1;
+            }
+        }
+
+        .mode-container {
+            flex: 1;
+            z-index: 2;
+        }
+
+        .mode-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        @media (max-width: 576px) {
+            .mode-label {
+                font-size: 0.75rem;
+            }
+            .mode-label svg {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        .active-link {
+            color: #ffffff !important;
+        }
+
+        .mode-glider {
+            position: absolute;
+            height: calc(100% - 8px);
+            width: calc(50% - 4px);
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            z-index: 1;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 576px) {
+            .mode-glider {
+                border-radius: 8px;
+                height: calc(100% - 6px);
+                width: calc(50% - 3px);
+            }
+        }
+
+        .glider-right {
+            transform: translateX(100%);
+        }
+
+        .privacy-selector input[type="radio"] {
+            display: none;
+        }
+
+        #mode-private:checked ~ .mode-glider {
+            transform: translateX(0);
+        }
+
+        #mode-public:checked ~ .mode-glider {
+            transform: translateX(100%);
+        }
+
+        #mode-private:checked + label,
+        #mode-public:checked + label {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        .mode-label:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* ===== SEARCH & INPUTS ===== */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid transparent !important;
+            border-radius: 100px !important;
+            color: white !important;
+            padding: 12px 25px 12px 50px !important;
+            transition: 0.4s;
+            font-size: 15px;
+        }
+
+        textarea.search-input {
+            border-radius: 20px !important;
+            padding: 20px !important;
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.3) !important;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* ===== NOTE CARDS ===== */
+        .note-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 30px;
+            height: 100%;
+            transition: all 0.5s cubic-bezier(0.2, 1, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Disable hover transform on mobile to prevent layout issues */
+        @media (min-width: 769px) {
+            .note-card:hover {
+                transform: translateY(-12px) scale(1.03);
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.3);
+                box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .note-card {
+                padding: 20px;
+                border-radius: 20px;
+            }
+            .note-card:active {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        @media (max-width: 576px) {
+            .card-title {
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+        }
+
+        .card-text {
+            color: rgba(255,255,255,0.6);
+            line-height: 1.8;
+            font-weight: 300;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-glass {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .nav-pencil-btn-large {
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Responsive nav buttons */
+        @media (max-width: 576px) {
+            .nav-pencil-btn-large {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+            }
+            .nav-pencil-btn-large svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        .btn-action {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 9px !important;
+            background: rgba(255,255,255,0.04) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+            transition: 0.3s;
+            padding: 0 !important;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .btn-action svg { width: 16px; height: 16px; }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            background: rgba(139, 92, 246, 0.2) !important;
+            color: white !important;
+            border-color: var(--accent) !important;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 71, 87, 0.3) !important;
+            border-color: #ff4757 !important;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--accent) !important;
+            border-color: var(--accent) !important;
+        }
+
+        /* ===== MODALS & DROPDOWNS ===== */
+        .custom-modal-content {
+            background: rgba(10,10,10,0.98);
+            backdrop-filter: blur(30px);
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Responsive modal styling */
+        @media (max-width: 576px) {
+            .custom-modal-content {
+                border-radius: 20px;
+                margin: 10px;
+            }
+            .custom-modal-content .modal-body {
+                padding: 25px !important;
+            }
+            .modal-dialog {
+                margin: 10px;
+            }
+        }
+
+        .dropdown-menu {
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+            background: rgba(15, 15, 15, 0.95) !important;
+        }
+
+        .user-label { color: rgba(255, 255, 255, 0.5); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        .user-name-display { color: #ffffff; font-weight: 700; font-size: 16px; }
+
+        .dropdown-item {
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: 0.2s;
+            font-size: 14px;
+            padding: 10px 15px !important;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(139, 92, 246, 0.15) !important;
+            color: var(--accent-light) !important;
+        }
+
+        /* Greeting Text */
+        .welcome-text {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+
+        /* Responsive welcome text */
+        @media (max-width: 576px) {
+            .welcome-text {
+                font-size: 1.5rem;
+                letter-spacing: -0.5px;
+            }
+        }
+
+        .thought-phrase {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (max-width: 576px) {
+            .thought-phrase {
+                font-size: 0.85rem;
+            }
+        }
+
+        .pulse-indicator {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #4ade80;
+            animation: pulse-glow 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-glow {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.4; transform: scale(0.9); }
+        }
+
+        .note-count-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+        }
+
+        .glass-divider {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            opacity: 1;
+        }
+
+        /* ===== MODERN COMPACT FOOTER ===== */
+        .glass-footer {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding: 40px 0 25px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(30px);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Responsive footer padding */
+        @media (max-width: 576px) {
+            .glass-footer {
+                padding: 30px 0 20px;
+            }
+        }
+
+        .footer-wrap {
+            max-width: 1050px;
+            margin: auto;
+        }
+
+        .footer-brand {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .footer-desc {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 260px;
+        }
+
+        /* Center footer content on mobile */
+        @media (max-width: 991px) {
+            .footer-desc {
+                text-align: center;
+                max-width: 100%;
+            }
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        @media (max-width: 576px) {
+            .social-icons {
+                gap: 10px;
+            }
+        }
+
+        .social-icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            transition: 0.3s;
+        }
+
+        .social-icon-btn:hover {
+            background: rgba(139,92,246,0.25);
+            border-color: var(--accent);
+            color: white;
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.45);
+            font-size: 12px;
+            text-decoration: none;
+            margin-left: 16px;
+            transition: 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-light);
+        }
+
+        /* Responsive footer links */
+        @media (max-width: 576px) {
+            .footer-links {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+            }
+            .footer-links a {
+                margin-left: 0;
+            }
+        }
+
+        .footer-bottom {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* Responsive container padding */
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+        }
+
+        /* Responsive note card actions */
+        @media (max-width: 576px) {
+            .note-card .d-flex.gap-2 {
+                gap: 6px !important;
+            }
+        }
+
+        /* Fix shareable link input overflow on mobile */
+        @media (max-width: 576px) {
+            .rounded-4 input[type="text"] {
+                font-size: 11px !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+  #django-messages {
+    position: fixed;
+    top: 30px; /* Slightly more breathing room from the top */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    width: auto;
+    pointer-events: none; /* Prevents invisible box from blocking clicks */
+}
+
+.simple-red-toast {
+    pointer-events: auto; /* Re-enables clicking on the toast itself */
+    background: rgba(211, 47, 47, 0.85); /* Modern translucent red */
+    backdrop-filter: blur(12px) saturate(180%); /* The 'Glass' effect */
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    color: #ffffff;
+
+    padding: 12px 24px;
+    border-radius: 16px; /* Pill-shaped modern feel */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Thin 'light' border for depth */
+
+    /* Font: Priority on modern sans-serifs */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    /* Soft 'Elevated' Shadow */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2),
+                0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+    margin-bottom: 12px;
+    min-width: 320px;
+    white-space: nowrap;
+
+    /* Smoother Animation */
+    animation: slideInDown 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.4s ease;
+}
+
+/* Keyframes for a more organic entrance */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Hover effect for a premium feel */
+.simple-red-toast:hover {
+    transform: scale(1.02);
+    background: rgba(211, 47, 47, 0.95);
+}
+    </style>
+</head>
+<body>
+{% if messages %}
+    <div id="django-messages">
+        {% for message in messages %}
+            <div class="simple-red-toast">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<nav class="glass-nav mb-4 mb-md-5">
+    <div class="container">
+        <span class="brand-logo">notes.py</span>
+
+        {% comment %} <div class="search-wrapper d-none d-md-block">
+            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" class="form-control search-input" placeholder="Search your thoughts...">
+        </div> {% endcomment %}
+
+        <!-- Wrapped nav controls for better mobile layout -->
+        <div class="nav-controls">
+           <div class="privacy-selector">
+                <div class="mode-container">
+    <a href="{% url 'all_view' %}" class="mode-label active-link">
+        <svg width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             class="me-1">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10
+                     15.3 15.3 0 0 1-4-10
+                     15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        Public
+    </a>
+</div>
+
+
+                <div class="mode-container">
+    <a href="{% url 'home' %}" class="mode-label">
+        <svg width="14" height="14" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             class="me-1">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Private
+    </a>
+</div>
+
+
+                <div class="mode-glider" id="glider"></div>
+            </div>
+
+            <button class="btn-glass nav-pencil-btn-large" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
+
+            <div class="dropdown">
+                <button class="btn-glass nav-pencil-btn-large" type="button" data-bs-toggle="dropdown">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end custom-modal-content p-2 mt-2" style="min-width: 200px;">
+                    <li class="px-3 py-2 border-bottom border-white border-opacity-10">
+                        <p class="user-label mb-0">Logged in as</p>
+                        <p class="user-name-display mb-0 text-truncate">{{ request.user.username }}</p>
+                    </li>
+                    <li><a class="dropdown-item rounded-3 mt-2" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">View Profile</a></li>
+                    <li><hr class="dropdown-divider opacity-10"></li>
+                    <li><a class="dropdown-item rounded-3 text-danger fw-bold" href="{% url 'logout' %}">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- MAIN CONTENT WRAPPER FOR STICKY FOOTER -->
+<div class="main-content">
+    <div class="container mt-3 mt-md-4 mb-4 mb-md-5">
+        <div class="row align-items-center">
+            <div class="col-12 col-lg-8">
+                <h1 class="welcome-text mb-1">
+                    Good <span id="day-greeting">Day</span>, {{ request.user.username }}
+                </h1>
+                <div class="thought-wrapper d-flex align-items-center gap-2">
+                    <div class="pulse-indicator"></div>
+                    <p id="thought-display" class="mb-0 thought-phrase">Synchronizing your thoughts...</p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 text-lg-end d-none d-lg-block">
+                <span class="note-count-badge">
+                    <strong>{{ publicnote|length }}</strong> Notes Saved
+                </span>
+            </div>
+        </div>
+
+        <hr class="glass-divider mt-3 mt-md-4">
+    </div>
+
+    <div class="container">
+    <div class="row g-4 g-lg-5">
+        {% for i in publicnote %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="note-card">
+                <div>
+                    <h5 class="card-title">{{ forloop.counter }}. {{ i.notehead }}</h5>
+                    <p class="card-text">{{ i.notecontent }}</p>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-auto pt-3 pt-md-4">
+                    <div class="d-flex flex-column">
+                        <span class="small opacity-25" style="font-size: 0.7rem;">Created: {{ i.created_at|date:"d M Y" }}</span>
+                        <span class="small opacity-25" style="font-size: 0.7rem;">Updated: {{ i.updated_at|timesince }} ago</span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn-action" data-bs-toggle="modal" data-bs-target="#viewModal-{{i.id}}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+
+                        <a href="{% url 'public_view' i.share_token %}" target="_blank" class="btn-action" style="color: var(--accent-light);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        </a>
+
+                        <button class="btn-action" data-bs-toggle="modal" data-bs-target="#editModal-{{i.id}}">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+
+                        <a href="{% url 'public_del' i.id %}" class="btn-action btn-delete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+    <!-- NEW NOTE MODAL -->
+    <div class="modal fade" id="newNoteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content custom-modal-content">
+                <div class="modal-body p-4 p-md-5">
+                    <h3 class="fw-bold mb-4">New Thought</h3>
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <input type="text" name="notehead" class="form-control search-input mb-4" placeholder="Title" required>
+                        <textarea name="notecontent" class="form-control search-input mb-4" rows="6" placeholder="Write freely..." required></textarea>
+                        <div class="d-flex gap-3">
+                            <button type="button" class="btn-glass flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-glass flex-grow-1" style="background: var(--accent);">Save Note</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for i in publicnote %}
+    <!-- VIEW MODAL -->
+    <div class="modal fade" id="viewModal-{{i.id}}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content custom-modal-content">
+                <div class="modal-body p-4 p-md-5">
+                    <div class="mb-2 small text-uppercase" style="letter-spacing: 2px; color: var(--accent-light); font-weight: 600;">Reading Thought</div>
+                    <h2 class="fw-bold mb-4 text-white" style="font-size: clamp(1.25rem, 5vw, 1.75rem);">{{ i.notehead }}</h2>
+                    <div style="width: 50px; height: 4px; background: var(--accent); border-radius: 10px; margin-bottom: 30px;"></div>
+                    <div class="reader-mode-body" style="font-size: clamp(1rem, 3vw, 1.2rem); line-height: 1.8; color: rgba(255, 255, 255, 0.9); white-space: pre-wrap; max-height: 55vh; overflow-y: auto;">
+                        {{ i.notecontent }}
+                    </div>
+                    <div class="mt-4 mt-md-5 pt-3 pt-md-4 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                        <div class="d-flex align-items-center gap-2 opacity-50">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span class="small">{{ i.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <button type="button" class="btn-glass px-4 px-md-5 w-100 w-sm-auto" data-bs-dismiss="modal">Done Reading</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+   <div class="modal fade" id="editModal-{{i.id}}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-body p-4 p-md-5">
+                <h3 class="fw-bold mb-4">Edit Thought</h3>
+                <form method="POST" action="{% url 'public_update' i.id %}">
+                    {% csrf_token %}
+
+                    <label class="small opacity-50 mb-2 ps-2">Title</label>
+                    <input type="text" name="notehead" class="form-control search-input mb-4" value="{{ i.notehead }}" required>
+
+                    <label class="small opacity-50 mb-2 ps-2">Content</label>
+                    <textarea name="notecontent" class="form-control search-input mb-4" rows="6" required>{{ i.notecontent }}</textarea>
+
+                    <label class="small opacity-50 mb-2 ps-2">Shareable Link</label>
+
+                    <div class="mb-4 p-3 rounded-4 d-flex align-items-center" style="background: rgba(139, 92, 246, 0.05); border: 1px solid var(--glass-border); overflow: hidden;">
+                        <input type="text" id="link-{{i.id}}" class="bg-transparent border-0 text-white w-100 small" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'public_view' i.share_token %}" style="min-width: 0;">
+
+                        <button type="button" class="btn-action ms-2 flex-shrink-0" onclick="copyLink('{{i.id}}')" title="Copy Link">
+                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn-glass flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn-glass flex-grow-1" style="background: var(--accent);">Update Note</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    {% endfor %}
+
+    <!-- PROFILE MODAL -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content custom-modal-content">
+                <div class="modal-body p-4 p-md-5 text-center">
+                    <h3 class="fw-bold mb-4 text-start">Profile Details</h3>
+                    <div class="mb-4 d-inline-block p-3" style="background: var(--glass); border: 1px solid var(--glass-border); border-radius: 50%;">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="text-start mb-4">
+                        <label class="small opacity-50 mb-1 ps-3">Username</label>
+                        <div class="form-control search-input mb-3 d-flex align-items-center text-white fw-bold" style="height: 50px;">
+                            {{ request.user.username }}
+                        </div>
+                        <label class="small opacity-50 mb-1 ps-3">Email Address</label>
+                        <div class="form-control search-input mb-3 d-flex align-items-center text-white" style="height: 50px;">
+                            {{ request.user.email|default:"No email provided" }}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button type="button" class="btn-glass flex-grow-1" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COPY TOAST -->
+    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 9999;">
+        <div id="copyToast" class="toast align-items-center text-white border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="background: var(--accent); backdrop-filter: blur(15px); border-radius: 12px;">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-2 py-3 px-4">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span class="fw-medium">Link copied to clipboard!</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END MAIN CONTENT WRAPPER -->
+
+<footer class="glass-footer mt-4 mt-md-5">
+    <div class="footer-wrap">
+        <div class="container">
+            <div class="row align-items-center gy-4">
+                <div class="col-lg-4 d-flex flex-column align-items-center align-items-lg-start text-center text-lg-start">
+    <div class="footer-brand mb-2">notes.py</div>
+    <div class="footer-desc">
+        Capturing thoughts, code, and everything in between.
+    </div>
+</div>
+
+                <div class="col-lg-4">
+                    <div class="social-icons">
+                        <a href="https://www.instagram.com/w4seeem" class="social-icon-btn" title="Instagram">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                                <circle cx="12" cy="12" r="4"/>
+                            </svg>
+                        </a>
+
+                        <a href="www.linkedin.com/in/wasim-faris-00440b370" class="social-icon-btn" title="LinkedIn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                                <rect x="2" y="9" width="4" height="12"/>
+                            </svg>
+                        </a>
+
+                        <a href="https://wa.me/919605505651" class="social-icon-btn" title="WhatsApp">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7"/>
+                            </svg>
+                        </a>
+
+                        <a href="mailto:waseemfaris179@gmail.com" class="social-icon-btn" title="Email">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 text-center text-lg-end">
+                    <div class="footer-links">
+                        <a href="#">Privacy</a>
+                        <a href="#">Terms</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                © 2026 notes.py — Built with Passion
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+   function copyLink(id) {
+    var copyText = document.getElementById("link-" + id);
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        const toastElement = document.getElementById('copyToast');
+        const toast = new bootstrap.Toast(toastElement, {
+            delay: 3000
+        });
+        toast.show();
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const hour = new Date().getHours();
+    const greetingEl = document.getElementById('day-greeting');
+    if (hour < 12) greetingEl.innerText = "Morning";
+    else if (hour < 17) greetingEl.innerText = "Afternoon";
+    else greetingEl.innerText = "Evening";
+
+    const thoughts = [
+        "Code is like humor. When you have to explain it, it's bad.",
+        "Beautiful is better than ugly.",
+        "Simple is better than complex.",
+        "Errors should never pass silently.",
+        "The best way to predict the future is to code it.",
+        "Don't repeat yourself (DRY)."
+    ];
+
+    let index = 0;
+    const display = document.getElementById('thought-display');
+
+    setInterval(() => {
+        display.style.opacity = 0;
+        setTimeout(() => {
+            index = (index + 1) % thoughts.length;
+            display.innerText = thoughts[index];
+            display.style.opacity = 1;
+        }, 500);
+    }, 5000);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('.simple-red-toast');
+    messages.forEach(function(msg) {
+        // Wait 3 seconds
+        setTimeout(function() {
+            msg.style.opacity = '0';
+            // Wait for fade animation to finish then remove
+            setTimeout(function() {
+                msg.remove();
+            }, 400);
+        }, 3000);
+    });
+});
+
+</script>
+
+</body>
+</html>

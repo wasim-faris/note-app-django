@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ note.notehead }} | Notes</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg:#050505;
+    --glass: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.1);
+    --accent:#8b5cf6;
+    --accent-light:#c084fc;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: 'Outfit', sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(139,92,246,.15), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(192,132,252,.1), transparent 40%);
+    padding: 20px; /* Padding for the body so card doesn't touch screen edges */
+    box-sizing: border-box;
+}
+
+.card {
+    max-width: 800px;
+    width: 100%;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 50px;
+    box-shadow: 0 40px 80px rgba(0,0,0,.6);
+    box-sizing: border-box;
+}
+
+.title {
+    font-size: clamp(24px, 5vw, 36px); /* Responsive font size */
+    font-weight: 800;
+    background: linear-gradient(to right, #fff, var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 24px;
+    line-height: 1.2;
+}
+
+.content {
+    color: rgba(255,255,255,.9);
+    font-size: 18px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word; /* Prevents long words from breaking layout */
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-light);
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 100px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,.05);
+    color: white;
+    cursor: pointer;
+    transition: .3s;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn:hover {
+    background: var(--accent);
+    box-shadow: 0 0 25px rgba(139,92,246,.6);
+}
+
+/* --- MOBILE OPTIMIZATIONS --- */
+@media (max-width: 600px) {
+    body {
+        align-items: flex-start; /* Start from top on mobile */
+        padding: 15px;
+    }
+
+    .card {
+        padding: 30px 20px; /* Reduced padding so text has more room */
+        border-radius: 24px;
+        margin-top: 10px;
+        min-height: calc(100vh - 50px); /* Tall aesthetic */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .title {
+        font-size: 28px;
+        text-align: left; /* Left align often feels more "app-like" */
+        margin-bottom: 20px;
+    }
+
+    .content {
+        font-size: 17px; /* Slightly smaller for mobile readability */
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+
+    .footer {
+        flex-direction: row; /* Keep them side-by-side or column? Row is usually better if short */
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 15px;
+        width: auto; /* Not full width looks more premium */
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="title">{{ note.notehead }}</div>
+
+    <div class="content">
+        {{ note.notecontent }}
+    </div>
+
+    <div class="footer">
+        <div class="brand">notes.py</div>
+        <a href="{% url 'home' %}" class="btn">Open App</a>
+    </div>
+</div>
+
+</body>
+</html>
